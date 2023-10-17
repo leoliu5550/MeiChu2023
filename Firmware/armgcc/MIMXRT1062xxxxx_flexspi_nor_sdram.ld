@@ -34,9 +34,11 @@
 /* Entry Point */
 ENTRY(Reset_Handler)
 
-HEAP_SIZE  = DEFINED(__heap_size__)  ? __heap_size__  : 0x0400;
-STACK_SIZE = DEFINED(__stack_size__) ? __stack_size__ : 0x0400;
+HEAP_SIZE  = DEFINED(__heap_size__)  ? __heap_size__  : 0x80000;
+STACK_SIZE = DEFINED(__stack_size__) ? __stack_size__ : 0x2000;
 VECTOR_RAM_SIZE = DEFINED(__ram_vector_table__) ? 0x00000400 : 0;
+NCACHE_HEAP_START = DEFINED(__heap_noncacheable__) ? 0x82000000 - HEAP_SIZE : 0x81E00000 - HEAP_SIZE;
+NCACHE_HEAP_SIZE  = DEFINED(__heap_noncacheable__) ? HEAP_SIZE : 0x0000;
 
 /* Specify the memory areas */
 MEMORY
@@ -46,15 +48,18 @@ MEMORY
   m_interrupts          (RX)  : ORIGIN = 0x60002000, LENGTH = 0x00000400
   m_text                (RX)  : ORIGIN = 0x60002400, LENGTH = 0x007FDC00
   m_qacode              (RX)  : ORIGIN = 0x00000000, LENGTH = 0x00020000
-  m_data                (RW)  : ORIGIN = 0x20000000, LENGTH = 0x00020000
-  m_data2               (RW)  : ORIGIN = 0x20200000, LENGTH = 0x000C0000
+  m_data                (RW)  : ORIGIN = 0x80000000, LENGTH = DEFINED(__heap_noncacheable__) ? 0x01E00000 : 0x01E00000 - HEAP_SIZE
+  m_ncache              (RW)  : ORIGIN = 0x81E00000, LENGTH = DEFINED(__heap_noncacheable__) ? 0x00200000 - HEAP_SIZE : 0x00200000
+  m_data2               (RW)  : ORIGIN = 0x20000000, LENGTH = 0x00020000
+  m_data3               (RW)  : ORIGIN = 0x20200000, LENGTH = 0x000C0000
+  m_heap                (RW)  : ORIGIN = NCACHE_HEAP_START, LENGTH = HEAP_SIZE
 }
 
 /* Define output sections */
 SECTIONS
 {
-  __NCACHE_REGION_START = ORIGIN(m_data2);
-  __NCACHE_REGION_SIZE  = 0;
+  __NCACHE_REGION_START = ORIGIN(m_ncache);
+  __NCACHE_REGION_SIZE  = LENGTH(m_ncache) + NCACHE_HEAP_SIZE;
 
   .flash_config :
   {
@@ -196,7 +201,6 @@ SECTIONS
     *(m_usb_dma_init_data)
     *(.data)                 /* .data sections */
     *(.data*)                /* .data* sections */
-    *(DataQuickAccess)       /* quick access data section */
     KEEP(*(.jcr*))
     . = ALIGN(4);
     __data_end__ = .;        /* define a global symbol at data end */
@@ -220,18 +224,25 @@ SECTIONS
     *(NonCacheable.init)
     . = ALIGN(4);
     __noncachedata_init_end__ = .;   /* create a global symbol at initialized ncache data end */
-  } > m_data
+  } > m_ncache
   . = __noncachedata_init_end__;
   .ncache :
   {
     *(NonCacheable)
     . = ALIGN(4);
     __noncachedata_end__ = .;     /* define a global symbol at ncache data end */
-  } > m_data
+  } > m_ncache
 
   __DATA_END = __NDATA_ROM + (__noncachedata_init_end__ - __noncachedata_start__);
   text_end = ORIGIN(m_text) + LENGTH(m_text);
   ASSERT(__DATA_END <= text_end, "region m_text overflowed with text and data")
+
+  .qadata :
+  {
+    . = ALIGN(4);
+    *(DataQuickAccess)       /* quick access data section */
+    . = ALIGN(4);
+  } > m_data2
 
   /* Uninitialized data section */
   .bss :
@@ -258,7 +269,7 @@ SECTIONS
     . += HEAP_SIZE;
     __HeapLimit = .;
     __heap_limit = .; /* Add for _sbrk */
-  } > m_data
+  } > m_heap
 
   .stack :
   {
@@ -272,6 +283,4 @@ SECTIONS
   PROVIDE(__stack = __StackTop);
 
   .ARM.attributes 0 : { *(.ARM.attributes) }
-
-  ASSERT(__StackLimit >= __HeapLimit, "region m_data overflowed with stack and heap")
 }

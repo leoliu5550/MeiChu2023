@@ -36,11 +36,11 @@ SET(EXECUTABLE_OUTPUT_PATH ${ProjDirPath}/${CMAKE_BUILD_TYPE})
 SET(LIBRARY_OUTPUT_PATH ${ProjDirPath}/${CMAKE_BUILD_TYPE})
 
 
-project(freertos_hello)
+project(tflm_cifar10)
 
-set(MCUX_BUILD_TYPES debug release sdram_debug sdram_release flexspi_nor_debug flexspi_nor_release)
+set(MCUX_BUILD_TYPES flexspi_nor_sdram_release flexspi_nor_sdram_debug)
 
-set(MCUX_SDK_PROJECT_NAME freertos_hello.elf)
+set(MCUX_SDK_PROJECT_NAME tflm_cifar10.elf)
 
 if (NOT DEFINED SdkRootDirPath)
     SET(SdkRootDirPath ${SdkRootDirPath})
@@ -51,24 +51,50 @@ include(${ProjDirPath}/flags.cmake)
 include(${ProjDirPath}/config.cmake)
 
 add_executable(${MCUX_SDK_PROJECT_NAME} 
-"${ProjDirPath}/../FreeRTOSConfig.h"
+"${SdkRootDirPath}/middleware/eiq/common/image/image_conv.c"
+"${SdkRootDirPath}/middleware/eiq/common/demo_info.h"
+"${SdkRootDirPath}/middleware/eiq/common/image/image.h"
+"${SdkRootDirPath}/middleware/eiq/common/image/image_decode_raw.c"
+"${SdkRootDirPath}/middleware/eiq/common/image/image_utils.h"
+"${SdkRootDirPath}/middleware/eiq/common/model/get_top_n.cpp"
+"${SdkRootDirPath}/middleware/eiq/common/model/get_top_n.h"
+"${SdkRootDirPath}/middleware/eiq/common/model/model.h"
+"${SdkRootDirPath}/middleware/eiq/common/model/output_postproc.h"
+"${SdkRootDirPath}/middleware/eiq/tensorflow-lite/examples/common/model/output_postproc.cpp"
+"${SdkRootDirPath}/middleware/eiq/tensorflow-lite/examples/cifar10/demo_config.h"
+"${SdkRootDirPath}/middleware/eiq/tensorflow-lite/examples/common/demo_info.cpp"
+"${SdkRootDirPath}/middleware/eiq/tensorflow-lite/examples/cifar10/image_data.h"
+"${SdkRootDirPath}/middleware/eiq/tensorflow-lite/examples/cifar10/labels.h"
+"${SdkRootDirPath}/middleware/eiq/tensorflow-lite/examples/model.cpp"
+"${SdkRootDirPath}/middleware/eiq/tensorflow-lite/examples/image/main.cpp"
 "${ProjDirPath}/../pin_mux.c"
 "${ProjDirPath}/../pin_mux.h"
-"${ProjDirPath}/../freertos_hello.c"
+"${SdkRootDirPath}/middleware/eiq/tensorflow-lite/examples/cifar10/model_cifarnet_ops_micro.cpp"
+"${SdkRootDirPath}/middleware/eiq/tensorflow-lite/examples/cifar10/pcq/model_data.h"
+"${SdkRootDirPath}/middleware/eiq/common/image/image_capture.c"
+"${SdkRootDirPath}/middleware/eiq/common/image/image_draw.c"
+"${SdkRootDirPath}/middleware/eiq/common/image/image_resize_nearest.c"
+"${SdkRootDirPath}/middleware/eiq/common/timer.h"
+"${SdkRootDirPath}/middleware/eiq/common/timer.c"
+"${ProjDirPath}/../board_init.c"
+"${ProjDirPath}/../board_init.h"
+"${ProjDirPath}/../board.c"
+"${ProjDirPath}/../board.h"
+"${ProjDirPath}/../clock_config.c"
+"${ProjDirPath}/../clock_config.h"
 "${ProjDirPath}/../dcd.c"
 "${ProjDirPath}/../dcd.h"
-"${SdkRootDirPath}/examples/evkbmimxrt1060/board.c"
-"${SdkRootDirPath}/examples/evkbmimxrt1060/board.h"
-"${SdkRootDirPath}/examples/evkbmimxrt1060/clock_config.c"
-"${SdkRootDirPath}/examples/evkbmimxrt1060/clock_config.h"
 )
 
 target_include_directories(${MCUX_SDK_PROJECT_NAME} PRIVATE
+    ${SdkRootDirPath}/middleware/eiq/tensorflow-lite/examples/cifar10
+    ${SdkRootDirPath}/middleware/eiq/common
+    ${SdkRootDirPath}/middleware/eiq/common/image
+    ${SdkRootDirPath}/middleware/eiq/common/model
     ${ProjDirPath}/..
-    ${SdkRootDirPath}/examples/evkbmimxrt1060
+    ${SdkRootDirPath}/middleware/eiq/tensorflow-lite/examples/cifar10/pcq
 )
 
-set_source_files_properties("${ProjDirPath}/../FreeRTOSConfig.h" PROPERTIES COMPONENT_CONFIG_FILE "middleware_freertos-kernel_template")
 
 include(${SdkRootDirPath}/core/devices/MIMXRT1062/all_lib_device.cmake)
 
@@ -82,8 +108,5 @@ target_link_libraries(${MCUX_SDK_PROJECT_NAME} PRIVATE ${TARGET_LINK_SYSTEM_LIBR
 
 TARGET_LINK_LIBRARIES(${MCUX_SDK_PROJECT_NAME} PRIVATE -Wl,--end-group)
 
-ADD_CUSTOM_COMMAND(TARGET ${MCUX_SDK_PROJECT_NAME} POST_BUILD COMMAND ${CMAKE_OBJCOPY}
--Obinary ${EXECUTABLE_OUTPUT_PATH}/${MCUX_SDK_PROJECT_NAME} ${EXECUTABLE_OUTPUT_PATH}/freertos_hello.bin)
-
-set_target_properties(${MCUX_SDK_PROJECT_NAME} PROPERTIES ADDITIONAL_CLEAN_FILES "output.map;${EXECUTABLE_OUTPUT_PATH}/freertos_hello.bin")
+set_target_properties(${MCUX_SDK_PROJECT_NAME} PROPERTIES ADDITIONAL_CLEAN_FILES "output.map")
 

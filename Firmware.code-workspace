@@ -1,8 +1,7 @@
 {
 	"folders": [
 		{
-			"name": "Firmware",
-			"path": "."
+			"path": "Firmware"
 		}
 	],
 	"settings": {}
