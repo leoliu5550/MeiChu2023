@@ -196,6 +196,9 @@ status_t BOARD_Touch_I2C_Receive(
 void BOARD_SD_Pin_Config(uint32_t speed, uint32_t strength);
 void BOARD_MMC_Pin_Config(uint32_t speed, uint32_t strength);
 
+void BOARD_EnableLcdInterrupt(void);
+void BOARD_InitLcdifPixelClock(void);
+
 #if defined(__cplusplus)
 }
 #endif /* __cplusplus */

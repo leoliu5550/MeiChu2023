@@ -23,5 +23,7 @@ void BOARD_Init()
     BOARD_InitCSIPins();
     BOARD_ResetDisplayMix();
     BOARD_InitLCDPins();
+    BOARD_InitLcdifPixelClock();
+    BOARD_EnableLcdInterrupt();
     BOARD_PrepareDisplayController();
 }

@@ -85,6 +85,8 @@ add_executable(${MCUX_SDK_PROJECT_NAME}
 "${ProjDirPath}/../tflite/main.cpp"
 "${ProjDirPath}/../tflite/model_cifarnet_ops_micro.cpp"
 "${ProjDirPath}/../tflite/model_data.h"
+
+"${ProjDirPath}/../tflite/lcd.h"
 )
 
 target_include_directories(${MCUX_SDK_PROJECT_NAME} PRIVATE
