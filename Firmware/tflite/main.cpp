@@ -105,8 +105,8 @@ int main(void)
 
     while (1)
     {
-        memset(s_frameBuffer, 0, sizeof(s_frameBuffer));
-        memcpy(s_frameBuffer, image_data, sizeof(image_data));
+        for (size_t i = 0;i < sizeof(s_frameBuffer);i++)
+            ((uint8_t *)s_frameBuffer)[i] = (uint8_t)rand() % 0xFF;
 
         /* Expected tensor dimensions: [batches, height, width, channels] */
         if (IMAGE_GetImage(inputData, inputDims.data[2], inputDims.data[1], inputDims.data[3]) != kStatus_Success)
