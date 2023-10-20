@@ -1,3 +1,5 @@
 .vscode/
 armgcc/*/
 __repo__/
+.cache/
+*.json
