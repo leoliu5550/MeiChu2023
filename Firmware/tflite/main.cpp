@@ -23,6 +23,10 @@
 #define STBI_NO_STDIO
 #include "sample_imgs.h"
 #include "stb_image.h"
+
+#define IMG_N 8
+#define IMG_D 384
+
 /* LCD Driver */
 
 AT_NONCACHEABLE_SECTION_ALIGN(static uint8_t s_frameBuffer[APP_IMG_HEIGHT * APP_IMG_WIDTH * 3], FRAME_BUFFER_ALIGN);
@@ -97,34 +101,111 @@ int main(void) {
   uint8_t* outputData = MODEL_GetOutputTensorData(&outputDims, &outputType);
 
   int x, y, n;
-  uint8_t* sample_imgs_1 = stbi_load_from_memory(__01_bmp, sizeof(__01_bmp), &x, &y, &n, 3);
+  int index = 0;
+  while (1) {
+    uint8_t* sample_img = NULL;
+    switch (index) {
+      case 0:
+        sample_img = stbi_load_from_memory(__01_bmp, sizeof(__01_bmp), &x, &y, &n, 3);
+        break;
+      case 1:
+        sample_img = stbi_load_from_memory(__02_bmp, sizeof(__02_bmp), &x, &y, &n, 3);
+        break;
+      case 2:
+        sample_img = stbi_load_from_memory(__03_bmp, sizeof(__03_bmp), &x, &y, &n, 3);
+        break;
+      case 3:
+        sample_img = stbi_load_from_memory(__04_bmp, sizeof(__04_bmp), &x, &y, &n, 3);
+        break;
+      case 4:
+        sample_img = stbi_load_from_memory(__05_bmp, sizeof(__05_bmp), &x, &y, &n, 3);
+        break;
+      case 5:
+        sample_img = stbi_load_from_memory(__06_bmp, sizeof(__06_bmp), &x, &y, &n, 3);
+        break;
+      case 6:
+        sample_img = stbi_load_from_memory(__07_bmp, sizeof(__07_bmp), &x, &y, &n, 3);
+        break;
+      case 7:
+        sample_img = stbi_load_from_memory(__08_bmp, sizeof(__08_bmp), &x, &y, &n, 3);
+        break;
+      default:
+        break;
+    }
+    if (!sample_img) continue;
 
-  if (sample_imgs_1)
+    memset(s_frameBuffer, 0x00, sizeof(s_frameBuffer));
+    int img_pos = 0;
     for (size_t i = 0; i < APP_IMG_HEIGHT; i++)
       for (size_t j = 0; j < APP_IMG_WIDTH; j++) {
         size_t pos = 3 * (i * APP_IMG_WIDTH + j);
-        s_frameBuffer[pos] = sample_imgs_1[pos + 2];
-        s_frameBuffer[pos + 1] = sample_imgs_1[pos + 1];
-        s_frameBuffer[pos + 2] = sample_imgs_1[pos];
+        if (j >= x || i >= y) {
+          s_frameBuffer[pos] = 0;
+          s_frameBuffer[pos + 1] = 0;
+          s_frameBuffer[pos + 2] = 0;
+        } else {
+          s_frameBuffer[pos] = sample_img[img_pos + 2];
+          s_frameBuffer[pos + 1] = sample_img[img_pos + 1];
+          s_frameBuffer[pos + 2] = sample_img[img_pos];
+          img_pos += 3;
+        }
       }
-  // memcpy(s_frameBuffer, sample_imgs_1, x * y * n);
 
-  while (1) {
-    /* Expected tensor dimensions: [batches, height, width, channels] */
-    if (IMAGE_GetImage(inputData, inputDims.data[2], inputDims.data[1], inputDims.data[3]) != kStatus_Success) {
-      PRINTF("Failed retrieving input image" EOL);
-      for (;;) {
+    // /* Expected tensor dimensions: [batches, height, width, channels] */
+    // if (IMAGE_GetImage(inputData, inputDims.data[2], inputDims.data[1], inputDims.data[3]) != kStatus_Success) {
+    //   PRINTF("Failed retrieving input image" EOL);
+    //   for (;;) {
+    //   }
+    // }
+
+    // memcpy(sample_img, inputData, inputDims.data[2] * inputDims.data[1] * inputDims.data[3]);
+
+    // slding 128x128 window on 320x320 image from sample_img
+    // step 64x64
+    // fill on the frame buffer beside the image
+    static uint8_t window_img[128 * 128 * 3];
+    for (int i = 0; i < 5; i++) {
+      for (int j = 0; j < 5; j++) {
+        int img_pos = 0;
+        for (int k = 0; k < 128; k++) {
+          for (int l = 0; l < 128; l++) {
+            int pos = 3 * ((k + i * 64) * IMG_D + l + j * 64);
+            window_img[img_pos] = sample_img[pos + 2];
+            window_img[img_pos + 1] = sample_img[pos + 1];
+            window_img[img_pos + 2] = sample_img[pos];
+
+            int buf_pos = 3 * (k * APP_IMG_WIDTH + l);
+            s_frameBuffer[buf_pos] = sample_img[pos + 2];
+            s_frameBuffer[buf_pos + 1] = sample_img[pos + 1];
+            s_frameBuffer[buf_pos + 2] = sample_img[pos];
+
+            img_pos += 3;
+          }
+        }
+
+        ELCDIF_SetNextBufferAddr(APP_ELCDIF, (uint32_t)s_frameBuffer);
+        memcpy(inputData, window_img, inputDims.data[2] * inputDims.data[1] * inputDims.data[3]);
+
+        MODEL_ConvertInput(inputData, &inputDims, inputType);
+
+        auto startTime = TIMER_GetTimeInUS();
+        MODEL_RunInference();
+        auto endTime = TIMER_GetTimeInUS();
+
+        int result_index;
+        int confidence;
+
+        MODEL_ProcessOutput(outputData, &outputDims, outputType, endTime - startTime, &result_index, &confidence);
+
+        PRINTF("::: {\"id\": %d, \"label\": %d, \"confident\": %d}\n", index >> 1, result_index, confidence);
+
+        uint32_t now = TIMER_GetTimeInUS();
+        while (TIMER_GetTimeInUS() - now < 10000)
+          ;
       }
     }
 
-    MODEL_ConvertInput(inputData, &inputDims, inputType);
-
-    auto startTime = TIMER_GetTimeInUS();
-    MODEL_RunInference();
-    auto endTime = TIMER_GetTimeInUS();
-
-    MODEL_ProcessOutput(outputData, &outputDims, outputType, endTime - startTime);
-
-    ELCDIF_SetNextBufferAddr(APP_ELCDIF, (uint32_t)s_frameBuffer);
+    stbi_image_free(sample_img);
+    index = (index + 1) % IMG_N;
   }
 }
