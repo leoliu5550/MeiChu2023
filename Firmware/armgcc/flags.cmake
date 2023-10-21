@@ -44,6 +44,7 @@ SET(CMAKE_C_FLAGS_FLEXSPI_NOR_SDRAM_RELEASE " \
     -DSDK_I2C_BASED_COMPONENT_USED=1 \
     -DTF_LITE_STATIC_MEMORY \
     -DCMSIS_NN \
+    -Os \
     -O3 \
     -mcpu=cortex-m7 \
     -Wall \
@@ -76,7 +77,8 @@ SET(CMAKE_C_FLAGS_FLEXSPI_NOR_SDRAM_DEBUG " \
     -DTF_LITE_STATIC_MEMORY \
     -DCMSIS_NN \
     -g \
-    -O0 \
+    -Os \
+    -O3 \
     -mcpu=cortex-m7 \
     -Wall \
     -mthumb \
@@ -102,6 +104,7 @@ SET(CMAKE_CXX_FLAGS_FLEXSPI_NOR_SDRAM_RELEASE " \
     -DMCUXPRESSO_SDK \
     -DTF_LITE_STATIC_MEMORY \
     -DCMSIS_NN \
+    -Os \
     -O3 \
     -mcpu=cortex-m7 \
     -Wall \
@@ -131,8 +134,9 @@ SET(CMAKE_CXX_FLAGS_FLEXSPI_NOR_SDRAM_DEBUG " \
     -DMCUXPRESSO_SDK \
     -DTF_LITE_STATIC_MEMORY \
     -DCMSIS_NN \
+    -Os \
+    -O3 \
     -g \
-    -O0 \
     -mcpu=cortex-m7 \
     -Wall \
     -mthumb \
