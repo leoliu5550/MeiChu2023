@@ -8,11 +8,11 @@
 #ifndef _DEMO_CONFIG_H_
 #define _DEMO_CONFIG_H_
 
-#define EXAMPLE_NAME       "CIFAR-10"
+#define EXAMPLE_NAME       "Label image"
 #define FRAMEWORK_NAME     "TensorFlow Lite Micro"
-#define DETECTION_TRESHOLD 60
+#define DETECTION_TRESHOLD 23
 #define NUM_RESULTS        1
 #define DEMO_VERBOSE       false
-#define EOL                "\r\n"
+#define EOL "\r\n"
 
 #endif // _DEMO_CONFIG_H_

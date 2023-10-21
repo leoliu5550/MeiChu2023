@@ -20,6 +20,7 @@ limitations under the License.
 #include "tensorflow/lite/micro/kernels/micro_ops.h"
 #include "tensorflow/lite/micro/micro_interpreter.h"
 #include "tensorflow/lite/micro/micro_op_resolver.h"
+#include "tensorflow/lite/micro/all_ops_resolver.h"
 #include "tensorflow/lite/schema/schema_generated.h"
 
 #include "fsl_debug_console.h"
@@ -54,13 +55,13 @@ status_t MODEL_Init(void)
     // incur some penalty in code space for op implementations that are not
     // needed by this graph.
     //
-    // tflite::AllOpsResolver resolver;
+    static tflite::AllOpsResolver resolver;
     // NOLINTNEXTLINE(runtime-global-variables)
-    tflite::MicroOpResolver &micro_op_resolver = MODEL_GetOpsResolver();
+    // tflite::MicroOpResolver &micro_op_resolver = MODEL_GetOpsResolver();
 
     // Build an interpreter to run the model with.
     static tflite::MicroInterpreter static_interpreter(
-        s_model, micro_op_resolver, s_tensorArena, kTensorArenaSize);
+        s_model, resolver, s_tensorArena, kTensorArenaSize);
     s_interpreter = &static_interpreter;
 
     // Allocate memory from the tensor_arena for the model's tensors.
